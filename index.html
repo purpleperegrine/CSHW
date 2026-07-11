@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -874,7 +875,7 @@
     .van-card {
       background: linear-gradient(150deg, var(--navy-700), var(--navy-600));
       border-radius: var(--radius-xl);
-      /* aspect-ratio: 4/5; */
+      aspect-ratio: 4/5;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -907,7 +908,7 @@
 
     .about-badge {
       position: absolute;
-      bottom: -3.7rem;
+      bottom: -1.25rem;
       right: -1.25rem;
       background: linear-gradient(135deg, var(--blue-400), var(--blue-500));
       color: var(--white);
@@ -1519,6 +1520,40 @@
     }
   </style>
 </head>
+<style>
+  :root {
+    /* Written by the JS below. Range roughly -1 .. 1. */
+    --tilt-x: 0;
+    --tilt-y: 0;
+  }
+
+  /* CHANGE ME: match your card class */
+  .why-card {
+    position: relative;
+    overflow: hidden; /* keeps the glow clipped to the rounded corners */
+  }
+
+  /* Glow layer. Neutral position is center-left (20%) to match your
+     existing left-side glow; tilt sweeps it across the card.
+     If ::after is already used on your cards, switch to ::before,
+     or move this background onto the card itself. */
+  .why-card::after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      600px circle at
+        calc(20% + var(--tilt-x) * 50%)
+        calc(50% + var(--tilt-y) * 40%),
+      rgba(0, 180, 216, 0.14),   /* your aqua #00B4D8 */
+      transparent 65%
+    );
+  }
+</style>
+
+
 
 <body>
 
@@ -1850,7 +1885,7 @@
               <path d="M12 8v4l3 3" />
             </svg>
           </div>
-          <div class="why-title">Reliable & Punctual</div>
+          <div class="why-title">Reliable &amp; On Time</div>
           <p class="why-body">We respect your time. Show up when we say we will, every single job — no surprises, no
             runaround.</p>
         </div>
@@ -1929,8 +1964,8 @@
       <div class="about-grid">
         <div class="about-visual reveal">
           <div class="van-card">
-            <!--<div class="van-glow"></div>-->
-            <img src="images/profile.jpg" style="width: 100%; height: auto;" />
+            <div class="van-glow"></div>
+            <img src="./images/profile.jpg" style="width: 100%; height: auto;" />
           </div>
           <div class="about-badge">
             Serving Rutherford County, NC<br>
@@ -1953,7 +1988,7 @@
             moss-covered roof. Every job gets my personal attention and a commitment to quality that you can see.
           </p>
           <p class="about-body reveal">
-            When you call Clean Slate, you're calling me directly. <br>No call centers, no middlemen — just Jake showing up
+            When you call Clean Slate, you're calling me directly. No call centers, no middlemen — just Jake showing up
             and doing the work right.
           </p>
           <div class="about-stats reveal">
@@ -2278,7 +2313,89 @@
       });
     });
   </script>
+<script>
+(() => {
+  'use strict';
 
+  // Respect reduced motion: glow stays static at its neutral position.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const root = document.documentElement.style;
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  // current (lerped) vs target values
+  let x = 0, y = 0;       // what's painted
+  let tx = 0, ty = 0;     // where input wants it
+  let base = null;        // baseline holding angle (phone)
+  let running = false;
+
+  const SENSITIVITY = 30;   // degrees of tilt for full sweep. Lower = twitchier.
+  const SMOOTHING  = 0.08;  // lerp factor per frame. Lower = floatier.
+  const RECENTER   = 0.005; // baseline drift per event. 0 = hold-a-tilt stays put.
+
+  function loop() {
+    x += (tx - x) * SMOOTHING;
+    y += (ty - y) * SMOOTHING;
+    root.setProperty('--tilt-x', x.toFixed(3));
+    root.setProperty('--tilt-y', y.toFixed(3));
+    requestAnimationFrame(loop);
+  }
+  function start() {
+    if (!running) { running = true; requestAnimationFrame(loop); }
+  }
+
+  /* ---------- phone: gyroscope ---------- */
+  function onOrient(e) {
+    if (e.gamma === null || e.beta === null) return; // no sensor data
+    if (base === null) base = { g: e.gamma, b: e.beta };
+
+    // Slowly re-center on the current holding angle so the glow
+    // drifts home after a sustained tilt (~2s half-life).
+    base.g += (e.gamma - base.g) * RECENTER;
+    base.b += (e.beta  - base.b) * RECENTER;
+
+    tx = clamp((e.gamma - base.g) / SENSITIVITY, -1, 1);
+    ty = clamp((e.beta  - base.b) / SENSITIVITY, -1, 1);
+  }
+
+  function startOrientation() {
+    addEventListener('deviceorientation', onOrient);
+    // Portrait/landscape flip swaps the axes — cheapest fix is a re-baseline.
+    addEventListener('orientationchange', () => { base = null; });
+    start();
+  }
+
+  function initMotion() {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      // iOS 13+: permission prompt must come from a user gesture.
+      // Piggyback on the first tap anywhere on the page.
+      const ask = () => {
+        removeEventListener('click', ask);
+        DeviceOrientationEvent.requestPermission()
+          .then(s => { if (s === 'granted') startOrientation(); })
+          .catch(() => {}); // denied → effect just stays off
+      };
+      addEventListener('click', ask);
+    } else {
+      startOrientation(); // Android / others: no permission needed (HTTPS required)
+    }
+  }
+
+  /* ---------- desktop: mouse drives the same two variables ---------- */
+  function onMouse(e) {
+    tx = (e.clientX / innerWidth)  * 2 - 1;
+    ty = (e.clientY / innerHeight) * 2 - 1;
+  }
+
+  if (matchMedia('(pointer: fine)').matches) {
+    addEventListener('mousemove', onMouse, { passive: true });
+    start();
+  } else {
+    initMotion();
+  }
+})();
+</script>
 </body>
 
 </html>
