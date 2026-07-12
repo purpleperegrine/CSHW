@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -1520,45 +1519,35 @@
       }
     }
   </style>
+  <style>
+    /* ===== Tilt-reactive glow — one shared light for all cards =====
+       The JS (end of <body>) computes a single light point in viewport
+       space and writes each card's pixel offset to it into --lx/--ly.
+       Every card renders the same lamp as seen from its own position.
+       The fallback values give a static left-biased glow when the JS
+       isn't driving (no JS, or prefers-reduced-motion). */
+    .why-card {
+      position: relative;
+      overflow: hidden; /* clips the glow to the rounded corners */
+    }
+
+    .why-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1; /* below the text, above the card's own tint */
+      background: radial-gradient(
+        circle 420px at
+          calc(var(--lx, 70) * 1px)
+          calc(var(--ly, 120) * 1px),
+        rgba(0, 180, 216, 0.35),
+        rgba(0, 180, 216, 0.10) 45%,
+        transparent 75%
+      );
+    }
+  </style>
 </head>
-<style>
-  :root {
-    /* Written by the JS below. Range roughly -1 .. 1. */
-    --tilt-x: 0;
-    --tilt-y: 0;
-  }
-
-  /* CHANGE ME: match your card class */
-  .why-card {
-    position: relative;
-    overflow: hidden; /* keeps the glow clipped to the rounded corners */
-  }
-
-  /* Glow layer. Neutral position is center-left (20%) to match your
-     existing left-side glow; tilt sweeps it across the card.
-     If ::after is already used on your cards, switch to ::before,
-     or move this background onto the card itself. */
-  .why-card::after {
-    z-index: -1;
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(
-    ellipse 70% 90% at
-      calc(20% + var(--tilt-x) * 80%)
-      calc(50% + var(--tilt-y) * 60%),
-    rgba(0, 180, 216, 0.35),
-    rgba(0, 180, 216, 0.10) 45%,
-    transparent 75%
-    );
-  } 
-
-
- 
-</style>
-
-
 
 <body>
 
@@ -2337,7 +2326,7 @@
   // Respect reduced motion: glow stays static at its neutral position.
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const root = document.documentElement.style;
+  const cards = document.querySelectorAll('.why-card');
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
   // current (lerped) vs target values
@@ -2353,8 +2342,19 @@
   function loop() {
     x += (tx - x) * SMOOTHING;
     y += (ty - y) * SMOOTHING;
-    root.setProperty('--tilt-x', x.toFixed(3));
-    root.setProperty('--tilt-y', y.toFixed(3));
+
+    // One shared light point, in viewport pixels.
+    // 0.5 = light rests at viewport center; 0.35 would bias it left.
+    const lightX = (0.5 + x * 0.5) * innerWidth;
+    const lightY = (0.5 + y * 0.5) * innerHeight;
+
+    // Read all layouts first, then write — avoids interleaved reflow.
+    const rects = [...cards].map(c => c.getBoundingClientRect());
+    cards.forEach((card, i) => {
+      card.style.setProperty('--lx', (lightX - rects[i].left).toFixed(1));
+      card.style.setProperty('--ly', (lightY - rects[i].top).toFixed(1));
+    });
+
     requestAnimationFrame(loop);
   }
   function start() {
