@@ -1252,6 +1252,118 @@
       }
     }
 
+
+
+/* ---------- Before / after ---------- */
+  .ba-tile{
+    grid-column:span 12;
+    padding:0;
+    gap:0;
+    overflow:hidden;
+  }
+  .ba:has(.ba-range:focus-visible){
+    outline:2px solid var(--rinse);
+    outline-offset:-4px;
+  }
+  .ba{
+    position:relative;
+    aspect-ratio:21/9;
+    --pos:55%;
+    cursor:ew-resize;
+  }
+  .ba-layer{ position:absolute; inset:0; }
+  /* Clean siding.  Swap: replace these two layers' backgrounds with your
+     R6 / drone shots — .ba-after gets the clean photo, .ba-before the dirty one. */
+  /*.ba-after{
+    background:
+      linear-gradient(180deg, rgba(10,33,56,.55) 0%, transparent 9%),
+      linear-gradient(160deg, rgba(124,205,244,.10), transparent 55%),
+      repeating-linear-gradient(180deg, #DCE9F2 0 26px, #C2D6E4 26px 30px);
+  }
+  .ba-before{
+    clip-path:inset(0 calc(100% - var(--pos)) 0 0);
+    background:
+      linear-gradient(180deg, rgba(10,25,20,.6) 0%, transparent 9%),
+      radial-gradient(340px 220px at 22% 78%, rgba(56,66,42,.5), transparent 70%),
+      radial-gradient(280px 200px at 68% 30%, rgba(64,70,48,.38), transparent 70%),
+      linear-gradient(160deg, rgba(84,88,58,.42), rgba(50,62,55,.5)),
+      repeating-linear-gradient(180deg, #9BA48F 0 26px, #7C8674 26px 30px);
+  }*/
+  .ba-before{
+  clip-path: inset(0 calc(100% - var(--pos)) 0 0);
+}
+.ba-layer img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+  .ba-line{
+    position:absolute;
+    top:0; bottom:0;
+    left:var(--pos);
+    width:2px;
+    margin-left:-1px;
+    background:var(--foam);
+    box-shadow:0 0 12px rgba(124,205,244,.7);
+    pointer-events:none;
+  }
+  .ba-grip{
+    position:absolute;
+    top:50%; left:var(--pos);
+    transform:translate(-50%,-50%);
+    width:38px; height:38px;
+    display:grid;
+    place-items:center;
+    font-family:var(--mono);
+    font-size:.72rem;
+    letter-spacing:.05em;
+    color:var(--ink);
+    background:var(--foam);
+    border-radius:var(--r-sm);
+    box-shadow:0 4px 14px rgba(3,12,24,.5);
+    pointer-events:none;
+  }
+  .ba-tag{
+    position:absolute;
+    top:14px;
+    font-family:var(--mono);
+    font-size:.66rem;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--foam);
+    background:rgba(7,26,46,.72);
+    -webkit-backdrop-filter:blur(6px);
+    backdrop-filter:blur(6px);
+    border:1px solid var(--line);
+    border-radius:var(--r-sm);
+    padding:5px 10px;
+    pointer-events:none;
+  }
+  .ba-tag-before{ left:14px; }
+  .ba-tag-after{ right:14px; }
+  .ba-range{
+    position:absolute;
+    inset:0;
+    width:100%; height:100%;
+    margin:0;
+    opacity:0;
+    cursor:ew-resize;
+  }
+  .ba-caption{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:16px 24px;
+    border-top:1px solid var(--line);
+  }
+  .ba-caption .hint{
+    font-size:.85rem;
+    color:var(--mist);
+  }
+
+
     /* ============================
        BEFORE/AFTER SHOWCASE
     ============================ */
@@ -1840,6 +1952,37 @@
         <button class="carousel-dot active" data-index="0" aria-label="Go to Slide 1"></button>
         <button class="carousel-dot" data-index="1" aria-label="Go to Slide 2"></button>
         <button class="carousel-dot" data-index="2" aria-label="Go to Slide 3"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Before / after ============ -->
+  <section class="wrap section" id="proof">
+    <div class="section-head">
+      <span class="spec">Results</span>
+      <h2>Proof, not promises</h2>
+      <p>Drag the line and watch the grime go.</p>
+    </div>
+    <div class="bento">
+      <div class="tile ba-tile">
+        <div class="ba" id="ba-demo">
+          <div class="ba-layer ba-after">
+  <img src="./images/after.jpg" alt="House after washing" loading="lazy">
+</div>
+<div class="ba-layer ba-before">
+  <img src="./images/before.jpg" alt="House before washing" loading="lazy">
+</div>
+<div class="ba-line" aria-hidden="true"></div>
+          <div class="ba-grip" aria-hidden="true">&lt;&nbsp;&gt;</div>
+          <span class="ba-tag ba-tag-before">Before</span>
+          <span class="ba-tag ba-tag-after">After</span>
+          <input class="ba-range" type="range" min="2" max="98" value="55"
+                 aria-label="Slide to compare before and after">
+        </div>
+        <div class="ba-caption">
+          <span class="spec">Vinyl siding · north face</span>
+          <span class="hint">Every job gets its own set — drone and DSLR, delivered same day.</span>
+        </div>
       </div>
     </div>
   </section>
