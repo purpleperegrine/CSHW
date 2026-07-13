@@ -609,7 +609,99 @@
     </div>
   </footer>
 
-  
+  <script>
+(() => {
+  'use strict';
+
+  // Respect reduced motion: glow stays static at its neutral position.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const cards = document.querySelectorAll('.why-card');
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  // current (lerped) vs target values
+  let x = 0, y = 0;       // what's painted
+  let tx = 0, ty = 0;     // where input wants it
+  let base = null;        // baseline holding angle (phone)
+  let running = false;
+
+  const SENSITIVITY = 30;   // degrees of tilt for full sweep. Lower = twitchier.
+  const SMOOTHING  = 0.08;  // lerp factor per frame. Lower = floatier.
+  const RECENTER   = 0.005; // baseline drift per event. 0 = hold-a-tilt stays put.
+
+  function loop() {
+    x += (tx - x) * SMOOTHING;
+    y += (ty - y) * SMOOTHING;
+
+    // One shared light point, in viewport pixels.
+    // 0.5 = light rests at viewport center; 0.35 would bias it left.
+    const lightX = (0.5 + x * 0.5) * innerWidth;
+    const lightY = (0.5 + y * 0.5) * innerHeight;
+
+    // Read all layouts first, then write — avoids interleaved reflow.
+    const rects = [...cards].map(c => c.getBoundingClientRect());
+    cards.forEach((card, i) => {
+      card.style.setProperty('--lx', (lightX - rects[i].left).toFixed(1));
+      card.style.setProperty('--ly', (lightY - rects[i].top).toFixed(1));
+    });
+
+    requestAnimationFrame(loop);
+  }
+  function start() {
+    if (!running) { running = true; requestAnimationFrame(loop); }
+  }
+
+  /* ---------- phone: gyroscope ---------- */
+  function onOrient(e) {
+    if (e.gamma === null || e.beta === null) return; // no sensor data
+    if (base === null) base = { g: e.gamma, b: e.beta };
+
+    // Slowly re-center on the current holding angle so the glow
+    // drifts home after a sustained tilt (~2s half-life).
+    base.g += (e.gamma - base.g) * RECENTER;
+    base.b += (e.beta  - base.b) * RECENTER;
+
+    tx = clamp((e.gamma - base.g) / SENSITIVITY, -1, 1);
+    ty = clamp((e.beta  - base.b) / SENSITIVITY, -1, 1);
+  }
+
+  function startOrientation() {
+    addEventListener('deviceorientation', onOrient);
+    // Portrait/landscape flip swaps the axes — cheapest fix is a re-baseline.
+    addEventListener('orientationchange', () => { base = null; });
+    start();
+  }
+
+  function initMotion() {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      // iOS 13+: permission prompt must come from a user gesture.
+      // Piggyback on the first tap anywhere on the page.
+      const ask = () => {
+        removeEventListener('click', ask);
+        DeviceOrientationEvent.requestPermission()
+          .then(s => { if (s === 'granted') startOrientation(); })
+          .catch(() => {}); // denied → effect just stays off
+      };
+      addEventListener('click', ask);
+    } else {
+      startOrientation(); // Android / others: no permission needed (HTTPS required)
+    }
+  }
+
+  /* ---------- desktop: mouse drives the same two variables ---------- */
+  function onMouse(e) {
+    tx = (e.clientX / innerWidth)  * 2 - 1;
+    ty = (e.clientY / innerHeight) * 2 - 1;
+  }
+
+  if (matchMedia('(pointer: fine)').matches) {
+    addEventListener('mousemove', onMouse, { passive: true });
+    start();
+  } else {
+    initMotion();
+  }
+})();</script>
 </body>
 
 </html>
