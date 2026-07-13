@@ -614,7 +614,6 @@
     }
 
     .service-icon-wrap svg {
-      align: center;
       width: 26px;
       height: 26px;
       stroke: var(--blue-400);
