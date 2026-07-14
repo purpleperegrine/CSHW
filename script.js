@@ -1,4 +1,3 @@
-// ===== Dynamic copyright year =====
     document.getElementById('copyright').textContent =
       `© ${new Date().getFullYear()} Clean Slate Home Wash. All rights reserved.`;
 

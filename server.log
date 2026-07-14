@@ -1,0 +1,9 @@
+127.0.0.1 - - [13/Jul/2026 20:58:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [13/Jul/2026 20:58:15] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [13/Jul/2026 20:58:15] "GET /images/driveway_before.png HTTP/1.1" 200 -
+127.0.0.1 - - [13/Jul/2026 20:58:15] "GET /images/driveway_after.png HTTP/1.1" 200 -
+127.0.0.1 - - [13/Jul/2026 20:58:15] "GET /images/roof_after.png HTTP/1.1" 200 -
+127.0.0.1 - - [13/Jul/2026 20:58:15] "GET /images/deck_before.png HTTP/1.1" 200 -
+127.0.0.1 - - [13/Jul/2026 20:58:15] "GET /images/roof_before.png HTTP/1.1" 200 -
+127.0.0.1 - - [13/Jul/2026 20:58:15] "GET /images/deck_after.png HTTP/1.1" 200 -
+127.0.0.1 - - [13/Jul/2026 20:58:15] "GET /images/profile.jpg HTTP/1.1" 200 -
